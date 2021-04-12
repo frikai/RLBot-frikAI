@@ -1,20 +1,18 @@
 import time
-from random import randrange, randint, random
+from random import random
 
-from rlbot.agents.base_agent import BaseAgent, SimpleControllerState
-from rlbot.messages.flat.QuickChatSelection import QuickChatSelection
-from rlbot.utils.structures.game_data_struct import GameTickPacket, Rotator
+from rlbot.agents.base_agent import BaseAgent
+from rlbot.utils.game_state_util import GameState, BallState, CarState, Physics, Vector3, Rotator, GameInfoState
+from rlbot.utils.structures.game_data_struct import Rotator
 
 from util.actions import *
-from util.math import Angles
 from util.objects import *
-from util.ball_prediction_analysis import find_slice_at_time
-from util.boost_pad_tracker import BoostPadTracker
-from util.drive import steer_toward_target
-from util.orientation import Orientation, relative_location
-from util.sequence import Sequence, ControlStep
+from util.orientation import Orientation
 from util.vec import Vec3
-from rlbot.utils.game_state_util import GameState, BallState, CarState, Physics, Vector3, Rotator, GameInfoState
+
+
+def rand():
+    return random() * np.random.choice([-1, 1])
 
 
 class FrikAI(BaseAgent):
@@ -26,14 +24,13 @@ class FrikAI(BaseAgent):
         self.first_packet = True
         # Set up information about the boost pads now that the game is active and the info is available
 
-        #self.boost_pad_tracker.initialize_boosts(self.get_field_info())
         self.field = Field(self.get_field_info())
         self.scheduler = Scheduler()
 
-        #game_info_state = GameInfoState(world_gravity_z=0.0001)
-        #game_state = GameState(game_info=game_info_state)
+        game_info_state = GameInfoState(world_gravity_z=0.0001)
+        game_state = GameState(game_info=game_info_state)
 
-        #self.set_game_state(game_state)
+        self.set_game_state(game_state)
 
     def update(self, packet):
         if self.first_packet:
@@ -85,27 +82,27 @@ class FrikAI(BaseAgent):
         if self.scheduler.is_empty():
             t_1 = packet.game_ball.physics.location
             target: CarDriveTarget = CarDriveTarget(Vec3(300, 300, 300), self.field.FLOOR[0])
-            print(target.loc)
-            self.scheduler.push(CarDrive(self.scheduler, self.field, self.my_car, target, is_filler=True))
-            # time.sleep(3)
-            # ball_state = BallState(physics=Physics(location=Vector3(0, 0, 1000)))
-            # rr = Vec3(random(), random(), random()) * math.pi
-            # rav = Vec3(random(), random(), random()).normalized() * random() * 5.5
-            # # angular_velocity=Vector3(rav.x, rav.y, rav.z)
-            # car_state = CarState(physics=Physics(location=Vector3(0, -500, 1000),
-            #                                      rotation=Rotator(rr.x, rr.y, rr.z)))
-            #
-            # game_state = GameState(ball=ball_state, cars={self.index: car_state})
-            #
-            # self.set_game_state(game_state)
-            # rotation = Rotator(1, 0, 0)
-            # self.scheduler.push(AerialAlign(self.scheduler, self.field, self.my_car, Orientation(rotation)))
+            # print(target.loc)
+            # self.scheduler.push(CarDrive(self.scheduler, self.field, self.my_car, target, is_filler=True))
+            time.sleep(3)
+            ball_state = BallState(physics=Physics(location=Vector3(0, 0, 1000)))
+            rr = Vec3(rand(), rand(), rand()) * math.pi
+            rav = Vec3(rand(), rand(), rand()).normalized() * rand() * 5.5
+            # angular_velocity=Vector3(rav.x, rav.y, rav.z),
+            car_state = CarState(physics=Physics(location=Vector3(0, -500, 1000),
+                                                 rotation=Rotator(rr.x, rr.y, rr.z)))
+
+            game_state = GameState(ball=ball_state, cars={self.index: car_state})
+
+            self.set_game_state(game_state)
+            rotation = Rotator(0, np.pi / 2, 0)
+            self.scheduler.push(AerialTest(self.scheduler, self.field, self.my_car, Orientation(rotation)))
 
     def render(self):
         gray_bg = self.renderer.create_color(230, 125, 125, 125)
         car = self.my_car
         ts = 1
-        self.renderer.draw_rect_2d(45, 180, 450*ts, 200*ts, True, gray_bg)
+        self.renderer.draw_rect_2d(45, 180, 450 * ts, 200 * ts, True, gray_bg)
         line_nr = 0
         x = 50 + self.team * 1000
         y = 185 + 500 * car.index % 4
@@ -124,10 +121,15 @@ class FrikAI(BaseAgent):
                 else:
                     color = self.renderer.green()
                 c_action = self.scheduler.current_action()
-                suffix = ": " + str(round(c_action.max_time - c_action.elapsed_time, 2)) if i == len(action_stack)-1 else ""
+                suffix = ": " + str(round(c_action.max_time - c_action.elapsed_time, 2)) if i == len(
+                    action_stack) - 1 else ""
                 self.renderer.draw_string_2d(x, y + line_nr * _line_height, ts, ts, action_stack[i] + suffix, color)
                 line_nr += 1
-
+            current: AerialTest = self.scheduler.action_stack[0]
+            c_loc = self.my_car.location
+            self.renderer.draw_line_3d(c_loc, c_loc + current.target_orientation.forward * 200, self.renderer.white())
+            self.renderer.draw_line_3d(c_loc, c_loc + current.target_orientation.right * 200, self.renderer.white())
+            self.renderer.draw_line_3d(c_loc, c_loc + current.target_orientation.up * 200, self.renderer.white())
             # tmp = self.scheduler.current_action().target.loc
             # self.renderer.draw_line_3d(tmp, tmp + Vec3(0, 0, 300), self.renderer.white())
             # self.renderer.draw_rect_3d(tmp + Vec3(0, 0, 300), 30, 30, True, self.renderer.pink(), centered=True)
