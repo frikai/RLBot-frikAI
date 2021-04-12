@@ -89,7 +89,8 @@ class ActionSkeleton(Action):
 
 
 class GroundDriveTowardsFixedAnyState(Action):
-    def __init__(self, scheduler: Scheduler, field: Field, car: Car, target: CarDriveTarget, max_time=15, is_filler=False):
+    def __init__(self, scheduler: Scheduler, field: Field, car: Car, target: CarDriveTarget, max_time=15,
+                 is_filler=False):
         super().__init__(scheduler, field, car, max_time, is_filler)
         self.is_filler = False
 
@@ -126,7 +127,8 @@ class GroundDriveTowardsFixedAnyState(Action):
 
 
 class GroundTurnTowardsFixedAnyState(Action):
-    def __init__(self, scheduler: Scheduler, field: Field, car: Car, target: CarDriveTarget, max_time=15, is_filler=False):
+    def __init__(self, scheduler: Scheduler, field: Field, car: Car, target: CarDriveTarget, max_time=15,
+                 is_filler=False):
         super().__init__(scheduler, field, car, max_time, is_filler)
         self.is_filler = False
 
@@ -160,7 +162,8 @@ class GroundTurnTowardsFixedAnyState(Action):
             if turn_towards_goal and ang_to_target > 130:
                 # conditions are met, we decide to turn towards the goal
                 goal_loc = self.field.goals[self.car.team].loc
-                ang_to_goal = ang_to_target = Angles.rad_to_deg(Angles.car_location_angle_flattened(self.car, self.target.loc))
+                ang_to_goal = ang_to_target = Angles.rad_to_deg(
+                    Angles.car_location_angle_flattened(self.car, self.target.loc))
                 turn_direction = -1 if ang_to_goal > 0 else 1
 
             if ang_to_target > 90:
@@ -173,24 +176,24 @@ class GroundTurnTowardsFixedAnyState(Action):
                 #     pass
                 #
                 # else:
-                    # let's check if our target is directly behind us
-                    target_directly_behind = target_distance < 300 and ang_to_target > 175
-                    if target_directly_behind:
-                        # the target is directly behind us, it's better to just drive/flip backwards
-                        # TODO: flip backwards
-                        controller.throttle = -1  # TODO: adjust throttle level
-                    else:
-                        # the target is not directly behind us and we need to make a sharp turn,
-                        # and thus decide to do a handbrake turn
-                        controller.throttle = min(1, target_distance/700)  # TODO: adjust throttle level
-                        controller.steer = turn_direction
-                        controller.handbrake = True
+                # let's check if our target is directly behind us
+                target_directly_behind = target_distance < 300 and ang_to_target > 175
+                if target_directly_behind:
+                    # the target is directly behind us, it's better to just drive/flip backwards
+                    # TODO: flip backwards
+                    controller.throttle = -1  # TODO: adjust throttle level
+                else:
+                    # the target is not directly behind us and we need to make a sharp turn,
+                    # and thus decide to do a handbrake turn
+                    controller.throttle = min(1, target_distance / 700)  # TODO: adjust throttle level
+                    controller.steer = turn_direction
+                    controller.handbrake = True
             else:
                 # we do not need to turn very strongly
                 if ang_to_target > 20:
                     # if our angle to the target is still fairly large but we are already close to the target,
                     # we don't want to go full speed to avoid driving past it
-                    controller.throttle = min(1, 0.1 + target_distance/700)  # TODO: adjust throttle level
+                    controller.throttle = min(1, 0.1 + target_distance / 700)  # TODO: adjust throttle level
                 else:
                     # nothing to worry about, full throttle
                     controller.throttle = 1
@@ -201,7 +204,8 @@ class GroundTurnTowardsFixedAnyState(Action):
 
 
 class CarDrive(Action):
-    def __init__(self, scheduler: Scheduler, field: Field, car: Car, target: CarDriveTarget, max_time=15, is_filler=False):
+    def __init__(self, scheduler: Scheduler, field: Field, car: Car, target: CarDriveTarget, max_time=15,
+                 is_filler=False):
         super().__init__(scheduler, field, car, max_time, is_filler)
         self.is_filler = False
 
@@ -290,23 +294,23 @@ class CarTurn(CarDrive):
                 # else:
                 # let's check if our target is directly behind us
                 target_directly_behind = target_distance < 500 and ang_to_target > 170
-                    if target_directly_behind:
-                        # the target is directly behind us, it's better to just drive/flip backwards
-                        # TODO: flip backwards
-                        controller.throttle = -1  # TODO: adjust throttle level
-                        turn_direction *= -1
-                    else:
-                        # the target is not directly behind us and we need to make a sharp turn,
-                        # and thus decide to do a handbrake turn
-                        controller.throttle = min(1, target_distance/700)  # TODO: adjust throttle level
-                        controller.steer = turn_direction
-                        controller.handbrake = True
+                if target_directly_behind:
+                    # the target is directly behind us, it's better to just drive/flip backwards
+                    # TODO: flip backwards
+                    controller.throttle = -1  # TODO: adjust throttle level
+                    turn_direction *= -1
+                else:
+                    # the target is not directly behind us and we need to make a sharp turn,
+                    # and thus decide to do a handbrake turn
+                    controller.throttle = min(1, target_distance / 700)  # TODO: adjust throttle level
+                    controller.steer = turn_direction
+                    controller.handbrake = True
             else:
                 # we do not need to turn very strongly
                 if ang_to_target > 20:
                     # if our angle to the target is still fairly large but we are already close to the target,
                     # we don't want to go full speed to avoid driving past it
-                    controller.throttle = min(1, 0.1 + target_distance/700)  # TODO: adjust throttle level
+                    controller.throttle = min(1, 0.1 + target_distance / 700)  # TODO: adjust throttle level
                 else:
                     # nothing to worry about, full throttle
                     controller.throttle = 1
@@ -336,7 +340,8 @@ class AerialRecovery(Action):
             else:
                 return controller
         else:
-            wall, time_to_land, arrival_location, arrival_velocity = self.field.get_projected_wall_intersection_car(self.car)
+            wall, time_to_land, arrival_location, arrival_velocity = self.field.get_projected_wall_intersection_car(
+                self.car)
             if self.target is None:
                 flat_velocity = wall.flatten(arrival_velocity)
                 if flat_velocity.length() == 0:
@@ -344,7 +349,6 @@ class AerialRecovery(Action):
                 self.target = CarDriveTarget(arrival_location + flat_velocity.normalized(), wall)
             # TODO: if given an actual target, calculate the proper vector towards it, flattened correctly on the
             #  wall we'll land on
-
 
         # else do logic:
         #   - decide to push some other action
@@ -356,7 +360,8 @@ class AerialRecovery(Action):
 
 
 class AerialAlign(Action):
-    def __init__(self, scheduler: Scheduler, field: Field, car: Car, target_orientation: Orientation, max_time=15, is_filler=False):
+    def __init__(self, scheduler: Scheduler, field: Field, car: Car, target_orientation: Orientation, max_time=15,
+                 is_filler=False):
         super().__init__(scheduler, field, car, max_time, is_filler)
         self.target_orientation: Orientation = target_orientation
 
